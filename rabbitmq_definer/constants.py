@@ -4,3 +4,5 @@ LEVEL_CHOICES = (
     ("CN", "Central"),
     ("PB", "Público")
 )
+
+SCHEMA_DEFINITIONS_PATH = "schema.definitions.json"

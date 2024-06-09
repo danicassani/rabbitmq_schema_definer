@@ -249,3 +249,4 @@ def get_full_dict(schema: Schema):
         "exchanges": exchanges,
         "bindings": bindings
     }
+    return full_dict
