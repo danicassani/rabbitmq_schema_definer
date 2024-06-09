@@ -1,7 +1,7 @@
 from .models import Schema, Service, BindedService, Federations, MqUser
 import hashlib, base64
 
-def get_base64_hash(input_string: str) -> str:
+def __get_base64_hash(input_string: str) -> str:
     # Choose the hashing algorithm
     hash_object = hashlib.sha256()
     
@@ -17,7 +17,7 @@ def get_base64_hash(input_string: str) -> str:
     return base64_representation
 
 
-def format_permission(user: MqUser, service: Service):
+def __format_permission(user: MqUser, service: Service):
     permission_dict = {
             "user": user.username,
             "vhost": service.name,
@@ -28,7 +28,7 @@ def format_permission(user: MqUser, service: Service):
     
     return permission_dict
 
-def format_queue(queue_name, vhost_name):
+def __format_queue(queue_name, vhost_name):
     queue_dict = {
         "name": queue_name,
         "vhost": vhost_name,
@@ -40,7 +40,7 @@ def format_queue(queue_name, vhost_name):
     return queue_dict
 
 
-def format_exchange(exchange_name, vhost_name):
+def __format_exchange(exchange_name, vhost_name):
     exchange_dict = {
         "name": exchange_name,
         "vhost":  vhost_name,
@@ -52,7 +52,7 @@ def format_exchange(exchange_name, vhost_name):
 
     return exchange_dict
 
-def format_binding(source_exchange_name: str, destination_name: str, vhost_name: str, routing_key: str):
+def __format_binding(source_exchange_name: str, destination_name: str, vhost_name: str, routing_key: str):
     binging_dict ={
         "source": source_exchange_name,
         "vhost": vhost_name,
@@ -71,19 +71,19 @@ def format_binding(source_exchange_name: str, destination_name: str, vhost_name:
 
 
 def get_users_and_permissions(schema: Schema):
-    aditional_users = list(schema.aditional_users.all())
-    binded_services = schema.binded_services.all()
+    aditional_users: list[MqUser] = list(schema.aditional_users.all())
+    binded_services: list[BindedService] = list(schema.binded_services.all())
     
-    service_users = []
+    service_users : list[MqUser] = []
     permissions_output = []
 
     for binded_service in binded_services:
         service_users.append(binded_service.service.normal_user)
-        permissions_output.append(format_permission(binded_service.service.normal_user, binded_service.service))
+        permissions_output.append(__format_permission(binded_service.service.normal_user, binded_service.service))
         service_users.append(binded_service.service.federation_user)
-        permissions_output.append(format_permission(binded_service.service.federation_user, binded_service.service))
+        permissions_output.append(__format_permission(binded_service.service.federation_user, binded_service.service))
         service_users.append(binded_service.service.shovel_user)
-        permissions_output.append(format_permission(binded_service.service.shovel_user, binded_service.service))
+        permissions_output.append(__format_permission(binded_service.service.shovel_user, binded_service.service))
 
 
     all_users_model_list = aditional_users + service_users
@@ -93,7 +93,7 @@ def get_users_and_permissions(schema: Schema):
     for user in all_users_model_list:
         user_dict = {
             "name": user.username,
-            "password_hash": get_base64_hash(user.password)
+            "password_hash": __get_base64_hash(user.password)
         }
         if user.admin:
             user_dict["tags"] = ["administrator"]
@@ -119,7 +119,7 @@ def get_users_and_permissions(schema: Schema):
 
 
 def get_vhosts(schema: Schema):
-    binded_services = schema.binded_services.all()
+    binded_services: list[BindedService] = list(schema.binded_services.all())
     
     vhosts_list = []
     
@@ -149,20 +149,20 @@ def get_queues(schema: Schema):
     for bind_service in bind_services:
         service: Service = bind_service.service
 
-        queues_list.append(format_queue("BUSINESS_Q", service.name))
-        queues_list.append(format_queue("ERROR_Q", service.name))
-        queues_list.append(format_queue("SEND2DB_Q", service.name))
+        queues_list.append(__format_queue("BUSINESS_Q", service.name))
+        queues_list.append(__format_queue("ERROR_Q", service.name))
+        queues_list.append(__format_queue("SEND2DB_Q", service.name))
 
         if bind_service.mqtt_output_enabled:
-            queues_list.append(format_queue("SEND2MQTTIO_Q", service.name))
+            queues_list.append(__format_queue("SEND2MQTTIO_Q", service.name))
         
         if Federations.objects.filter(service=service).count() > 0:
-            queues_list.append(format_queue("FROMBROKER_Q", service.name))
+            queues_list.append(__format_queue("FROMBROKER_Q", service.name))
 
         #TODO Chequear si falta alguno
 
-    queues_list.append(format_queue("SEND2JRU_Q", "DB_SERVICE"))
-    queues_list.append(format_queue("ERROR_Q", "DB_SERVICE"))
+    queues_list.append(__format_queue("SEND2JRU_Q", "DB_SERVICE"))
+    queues_list.append(__format_queue("ERROR_Q", "DB_SERVICE"))
 
     return queues_list
 
@@ -176,29 +176,29 @@ def get_exchanges(schema: Schema):
     for bind_service in bind_services:
         service: Service = bind_service.service
 
-        exchange_list.append(format_exchange("SEND2DB_E", service.name))
-        exchange_list.append(format_exchange("ERROR_E", service.name))
+        exchange_list.append(__format_exchange("SEND2DB_E", service.name))
+        exchange_list.append(__format_exchange("ERROR_E", service.name))
 
         if bind_service.mqtt_output_enabled:
-            exchange_list.append(format_exchange("MQTT_E", service.name))
+            exchange_list.append(__format_exchange("MQTT_E", service.name))
         
         if bind_service.mqtt_input_enabled:
-            exchange_list.append(format_exchange("SEND2MQTTIO_E", service.name))
+            exchange_list.append(__format_exchange("SEND2MQTTIO_E", service.name))
 
-        exchange_list.append(format_exchange("SEND2JRU_E ", "DB_SERVICE"))
-        exchange_list.append(format_exchange("FROMVHOSTS_E ", "DB_SERVICE"))
-        exchange_list.append(format_exchange("ERROR_E ", "DB_SERVICE"))
+        exchange_list.append(__format_exchange("SEND2JRU_E ", "DB_SERVICE"))
+        exchange_list.append(__format_exchange("FROMVHOSTS_E ", "DB_SERVICE"))
+        exchange_list.append(__format_exchange("ERROR_E ", "DB_SERVICE"))
 
         federations = Federations.objects.filter(service=service)
 
         if len(federations) > 0:
-            exchange_list.append(format_exchange("FROMLOWER_E ", "DB_SERVICE"))
-            exchange_list.append(format_exchange("FROMUPPER_E ", "DB_SERVICE"))
-            exchange_list.append(format_exchange("FROMCMW_E ", "DB_SERVICE")) #TODO Chequear esto
+            exchange_list.append(__format_exchange("FROMLOWER_E ", "DB_SERVICE"))
+            exchange_list.append(__format_exchange("FROMUPPER_E ", "DB_SERVICE"))
+            exchange_list.append(__format_exchange("FROMCMW_E ", "DB_SERVICE")) #TODO Chequear esto
             
         for federation in federations:
-            exchange_list.append(format_exchange(f"FROM{federation.destination_level}_E", service.name))
-            exchange_list.append(format_exchange(f"SEND{schema.level}_E", service.name))
+            exchange_list.append(__format_exchange(f"FROM{federation.destination_level}_E", service.name))
+            exchange_list.append(__format_exchange(f"SEND{schema.level}_E", service.name))
 
         #TODO Chequear si falta alguno
 
@@ -212,21 +212,21 @@ def get_bindings(schema: Schema):
 
     for bind_service in bind_services:
         service: Service = bind_service.service
-        bindings_list.append(format_binding("ERROR_E", "ERROR_Q", service.name, "#"))
-        bindings_list.append(format_binding("SEND2DB_E", "SEND2DB_Q", service.name, "*.*.*.*.*.*.*.*.*"))
+        bindings_list.append(__format_binding("ERROR_E", "ERROR_Q", service.name, "#"))
+        bindings_list.append(__format_binding("SEND2DB_E", "SEND2DB_Q", service.name, "*.*.*.*.*.*.*.*.*"))
 
         for mqtt_routing_key in bind_service.mqtt_binding_routing_keys.split(','):
             if bind_service.mqtt_output_enabled:
-                bindings_list.append(format_binding("MQTT_E", "BUSINESS_Q", service.name, mqtt_routing_key))
+                bindings_list.append(__format_binding("MQTT_E", "BUSINESS_Q", service.name, mqtt_routing_key))
 
         if bind_service.mqtt_input_enabled:
-            bindings_list.append(format_binding("SEND2MQTTIO_E", "SEND2MQTTIO_Q", service.name,  "*.*.*.*.*.*.101.*.*"))
+            bindings_list.append(__format_binding("SEND2MQTTIO_E", "SEND2MQTTIO_Q", service.name,  "*.*.*.*.*.*.101.*.*"))
         
         federations = Federations.objects.filter(service=service)
 
         for federation in federations:
             for fed_routing_key in federation.federations_binding_routing_keys.split(','):
-                bindings_list.append(format_binding(f"FROM{federation.destination_level}", "BUSINESS_Q", service.name,  fed_routing_key)) #BUSINESS_Q o FROMBROKER_Q ¿?¿? 
+                bindings_list.append(__format_binding(f"FROM{federation.destination_level}", "BUSINESS_Q", service.name,  fed_routing_key)) #BUSINESS_Q o FROMBROKER_Q ¿?¿? 
 
     return bindings_list
 
