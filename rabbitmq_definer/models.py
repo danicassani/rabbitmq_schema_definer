@@ -3,7 +3,7 @@ from .constants import LEVEL_CHOICES
     
 # Create your models here.
 
-class CmwUser(models.Model):
+class MqUser(models.Model):
     username = models.CharField(max_length=50)
     password = models.CharField(max_length=50)
     admin = models.BooleanField(default=False)
@@ -21,9 +21,9 @@ class CmwUser(models.Model):
     
 class Service(models.Model):
     name = models.CharField(verbose_name="Service's Vhost name", max_length=50)
-    normal_user = models.OneToOneField(CmwUser, related_name='normal_user', on_delete=models.DO_NOTHING)
-    federation_user = models.OneToOneField(CmwUser, related_name='federation_user', on_delete=models.DO_NOTHING)
-    shovel_user = models.OneToOneField(CmwUser, related_name='shovel_user', on_delete=models.DO_NOTHING)
+    normal_user = models.OneToOneField(MqUser, related_name='normal_user', on_delete=models.DO_NOTHING)
+    federation_user = models.OneToOneField(MqUser, related_name='federation_user', on_delete=models.DO_NOTHING)
+    shovel_user = models.OneToOneField(MqUser, related_name='shovel_user', on_delete=models.DO_NOTHING)
 
     def __str__(self) -> str:
         return self.name
@@ -42,7 +42,7 @@ class Schema(models.Model):
     level = models.CharField(choices=LEVEL_CHOICES, max_length=20)
     version = models.CharField(verbose_name="RabbitMQ version used", max_length=10) #TODO make sure it has version format
     binded_services = models.ManyToManyField(BindedService)
-    aditional_users = models.ManyToManyField(CmwUser, blank=True)
+    aditional_users = models.ManyToManyField(MqUser, blank=True)
 
     def __str__(self) -> str:
         return self.name

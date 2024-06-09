@@ -1,4 +1,4 @@
-from .models import Schema, Service, BindedService, Federations, CmwUser
+from .models import Schema, Service, BindedService, Federations, MqUser
 import hashlib, base64
 
 def get_base64_hash(input_string: str) -> str:
@@ -17,7 +17,7 @@ def get_base64_hash(input_string: str) -> str:
     return base64_representation
 
 
-def format_permission(user: CmwUser, service: Service):
+def format_permission(user: MqUser, service: Service):
     permission_dict = {
             "user": user.username,
             "vhost": service.name,
