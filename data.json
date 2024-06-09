@@ -1,0 +1,203 @@
+{
+    "global_parameters": [
+        {
+            "name": "cluster_name",
+            "value": "prueba"
+        }
+    ],
+    "vhosts": [
+        {
+            "name": "TMSPE"
+        }
+    ],
+    "users": [
+        {
+            "name": "dmiuser",
+            "password_hash": "EKbmzIMRo+K8wJv2wZmt7NXdWUCMND6SaxKcSRTzywE=",
+            "tags": [
+                "administrator"
+            ]
+        },
+        {
+            "name": "tmspeuser",
+            "password_hash": "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=",
+            "tags": []
+        },
+        {
+            "name": "tmspefeduser",
+            "password_hash": "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=",
+            "tags": []
+        },
+        {
+            "name": "tmspeshoveluser",
+            "password_hash": "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=",
+            "tags": []
+        }
+    ],
+    "permissions": [
+        {
+            "user": "tmspeuser",
+            "vhost": "TMSPE",
+            "configure": ".*",
+            "read": ".*",
+            "write": ".*"
+        },
+        {
+            "user": "tmspefeduser",
+            "vhost": "TMSPE",
+            "configure": ".*",
+            "read": ".*",
+            "write": ".*"
+        },
+        {
+            "user": "tmspeshoveluser",
+            "vhost": "TMSPE",
+            "configure": ".*",
+            "read": ".*",
+            "write": ".*"
+        },
+        {
+            "user": "dmiuser",
+            "vhost": "MQTT_IO",
+            "configure": ".*",
+            "read": ".*",
+            "write": ".*"
+        }
+    ],
+    "queues": [
+        {
+            "name": "BUSINESS_Q",
+            "vhost": "TMSPE",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        },
+        {
+            "name": "ERROR_Q",
+            "vhost": "TMSPE",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        },
+        {
+            "name": "SEND2DB_Q",
+            "vhost": "TMSPE",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        },
+        {
+            "name": "SEND2MQTTIO_Q",
+            "vhost": "TMSPE",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        },
+        {
+            "name": "SEND2JRU_Q",
+            "vhost": "DB_SERVICE",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        },
+        {
+            "name": "ERROR_Q",
+            "vhost": "DB_SERVICE",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        }
+    ],
+    "exchanges": [
+        {
+            "name": "SEND2DB_E",
+            "vhost": "TMSPE",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        },
+        {
+            "name": "ERROR_E",
+            "vhost": "TMSPE",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        },
+        {
+            "name": "MQTT_E",
+            "vhost": "TMSPE",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        },
+        {
+            "name": "SEND2MQTTIO_E",
+            "vhost": "TMSPE",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        },
+        {
+            "name": "SEND2JRU_E ",
+            "vhost": "DB_SERVICE",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        },
+        {
+            "name": "FROMVHOSTS_E ",
+            "vhost": "DB_SERVICE",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        },
+        {
+            "name": "ERROR_E ",
+            "vhost": "DB_SERVICE",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        }
+    ],
+    "bindings": [
+        {
+            "source": "ERROR_E",
+            "vhost": "TMSPE",
+            "destination": "ERROR_Q",
+            "destination_type": "queue",
+            "routing_key": "#",
+            "arguments": {}
+        },
+        {
+            "source": "SEND2DB_E",
+            "vhost": "TMSPE",
+            "destination": "SEND2DB_Q",
+            "destination_type": "queue",
+            "routing_key": "*.*.*.*.*.*.*.*.*",
+            "arguments": {}
+        },
+        {
+            "source": "MQTT_E",
+            "vhost": "TMSPE",
+            "destination": "BUSINESS_Q",
+            "destination_type": "queue",
+            "routing_key": "*.*.*.*.*.*.*.*.*",
+            "arguments": {}
+        },
+        {
+            "source": "SEND2MQTTIO_E",
+            "vhost": "TMSPE",
+            "destination": "SEND2MQTTIO_Q",
+            "destination_type": "queue",
+            "routing_key": "*.*.*.*.*.*.101.*.*",
+            "arguments": {}
+        }
+    ]
+}
