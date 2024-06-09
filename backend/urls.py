@@ -18,6 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path("", include("cmw_definer.urls")),
+    path("", include("rabbitmq_definer.urls")),
     path('admin/', admin.site.urls),
 ]

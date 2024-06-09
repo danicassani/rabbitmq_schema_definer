@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 .vscode
-cmw_definer/migrations/
+rabbitmq_definer/migrations/
 # Distribution / packaging
 .Python
 build/

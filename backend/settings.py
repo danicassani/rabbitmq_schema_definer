@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'cmw_definer',
+    'rabbitmq_definer',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
