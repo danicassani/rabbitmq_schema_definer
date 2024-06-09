@@ -3,11 +3,11 @@
 {% block title %}Downloader{% endblock %}
 
 {% block content %}
-<div class="container mt-4" style="width: 80%;">
+<div class="container mt-4 card custom-card text-white" style="padding:3%;">
     <h1>Schema Downloader</h1>
     </br>
-<h4>Select a schema and download all the configuration files.</h4>
-<p>Also, you can create and edit schemas using the <a href="{% url 'admin:index' %}">Admin Views</a>.</p>
+    <h4>Select a schema and download all the configuration files.</h4>
+    <p>Also, you can create and edit schemas using the <a href="{% url 'admin:index' %}">Admin Views</a>.</p>
     </br>
     <form method="POST">
         {% csrf_token %}
