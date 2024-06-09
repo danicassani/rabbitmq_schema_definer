@@ -37,18 +37,7 @@ class BindedService(models.Model):
     def __str__(self) -> str:
         return f"{self.service.name}_{self.pk}"
 
-class Schema(models.Model):
-    name = models.CharField(verbose_name="Cluster Name", max_length=50)
-    level = models.CharField(choices=LEVEL_CHOICES, max_length=20)
-    version = models.CharField(verbose_name="RabbitMQ version used", max_length=10) #TODO make sure it has version format
-    binded_services = models.ManyToManyField(BindedService)
-    aditional_users = models.ManyToManyField(MqUser, blank=True)
-
-    def __str__(self) -> str:
-        return self.name
-    
-
-class Federations(models.Model):
+class Federation(models.Model):
     name = models.CharField(verbose_name="Federation Name", max_length=50)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     destination_level = models.CharField(choices=LEVEL_CHOICES, max_length=20)
@@ -59,3 +48,15 @@ class Federations(models.Model):
 
     def __str__(self) -> str:
         return self.name
+    
+class Schema(models.Model):
+    name = models.CharField(verbose_name="Cluster Name", max_length=50)
+    level = models.CharField(choices=LEVEL_CHOICES, max_length=20)
+    version = models.CharField(verbose_name="RabbitMQ version used", max_length=10) #TODO make sure it has version format
+    binded_services = models.ManyToManyField(BindedService)
+    aditional_users = models.ManyToManyField(MqUser, blank=True, default=None)
+    federations = models.ManyToManyField(Federation, blank=True, default=None)
+
+    def __str__(self) -> str:
+        return self.name
+    

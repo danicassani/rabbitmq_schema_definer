@@ -1,4 +1,4 @@
-from .models import Schema, Service, BindedService, Federations, MqUser
+from .models import Schema, Service, BindedService, Federation, MqUser
 import hashlib, base64
 
 def __get_base64_hash(input_string: str) -> str:
@@ -68,6 +68,20 @@ def __format_binding(source_exchange_name: str, destination_name: str, vhost_nam
         binging_dict["destination_type"]="queue"
 
     return binging_dict
+
+def __format_federation(federation: Federation):
+    federation_dict = {
+        "username": federation.service.federation_user.username,
+        "password": federation.service.federation_user.password,
+        "dst-host": federation.hostname,
+        "port": federation.port,
+        "exchange": f"SEND2{federation.destination_level}_E",
+        "max-hops": federation.max_hops,
+        "vhost": federation.service.name,
+        "upstream-name": federation.name
+    }
+
+    return federation_dict
 
 
 def get_users_and_permissions(schema: Schema):
@@ -156,7 +170,7 @@ def get_queues(schema: Schema):
         if bind_service.mqtt_output_enabled:
             queues_list.append(__format_queue("SEND2MQTTIO_Q", service.name))
         
-        if Federations.objects.filter(service=service).count() > 0:
+        if Federation.objects.filter(service=service).count() > 0:
             queues_list.append(__format_queue("FROMBROKER_Q", service.name))
 
         #TODO Chequear si falta alguno
@@ -189,7 +203,7 @@ def get_exchanges(schema: Schema):
         exchange_list.append(__format_exchange("FROMVHOSTS_E ", "DB_SERVICE"))
         exchange_list.append(__format_exchange("ERROR_E ", "DB_SERVICE"))
 
-        federations = Federations.objects.filter(service=service)
+        federations = Federation.objects.filter(service=service)
 
         if len(federations) > 0:
             exchange_list.append(__format_exchange("FROMLOWER_E ", "DB_SERVICE"))
@@ -222,7 +236,7 @@ def get_bindings(schema: Schema):
         if bind_service.mqtt_input_enabled:
             bindings_list.append(__format_binding("SEND2MQTTIO_E", "SEND2MQTTIO_Q", service.name,  "*.*.*.*.*.*.101.*.*"))
         
-        federations = Federations.objects.filter(service=service)
+        federations = Federation.objects.filter(service=service)
 
         for federation in federations:
             for fed_routing_key in federation.federations_binding_routing_keys.split(','):
@@ -232,7 +246,7 @@ def get_bindings(schema: Schema):
 
 
 
-def get_full_dict(schema: Schema):
+def get_full_schema_definitions(schema: Schema):
     global_paramterers = get_global_parameters(schema)
     users, permissions = get_users_and_permissions(schema)
     vhosts = get_vhosts(schema)
@@ -249,4 +263,20 @@ def get_full_dict(schema: Schema):
         "exchanges": exchanges,
         "bindings": bindings
     }
+    return full_dict
+
+
+def get_full_federations(schema: Schema):
+    definitions = {}
+
+    schema_federations: list[Federation] = list(schema.federations.all())
+    
+    for federation in schema_federations:
+        definitions[federation.name] = __format_federation(federation)
+
+    # TODO To be completed
+    full_dict = {
+        "definitions": definitions
+    }
+    
     return full_dict
