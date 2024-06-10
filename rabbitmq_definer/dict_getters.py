@@ -274,8 +274,15 @@ def get_full_federations(schema: Schema):
     for federation in schema_federations:
         definitions[federation.name] = __format_federation(federation)
 
-    # TODO To be completed
     full_dict = {
+        "path_prefix": "/api/parameters",
+        "component": "federation-upstream",
+        "ack-mode": "on-confirm",
+        "uri_prefix": "amqps",
+        "trust-user-id": False,
+        "headers":{
+            "content-type": "application/json"
+        },
         "definitions": definitions
     }
     
