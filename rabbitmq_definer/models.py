@@ -54,8 +54,10 @@ class Schema(models.Model):
     level = models.CharField(choices=LEVEL_CHOICES, max_length=20)
     version = models.CharField(verbose_name="RabbitMQ version used", max_length=10) #TODO make sure it has version format
     binded_services = models.ManyToManyField(BindedService)
-    aditional_users = models.ManyToManyField(MqUser, blank=True, default=None)
     federations = models.ManyToManyField(Federation, blank=True, default=None)
+    aditional_users = models.ManyToManyField(MqUser, blank=True, default=None)
+    mqttioshoveluser = models.ForeignKey(MqUser, related_name="mqttioshoveluser", on_delete=models.DO_NOTHING, null=True) #TODO delete the null=True when db is regenerated
+    dbshoveluser = models.ForeignKey(MqUser, related_name="dbshoveluser", on_delete=models.DO_NOTHING, null=True) #TODO delete the null=True when db is regenerated
 
     def __str__(self) -> str:
         return self.name

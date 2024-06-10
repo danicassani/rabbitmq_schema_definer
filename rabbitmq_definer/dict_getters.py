@@ -83,6 +83,81 @@ def __format_federation(federation: Federation):
 
     return federation_dict
 
+def __format_queuesize_policy(service_name: str):
+    queuesize_policy_dict = {
+            "vhost": service_name,
+            "policy-name": "QUEUESIZE_P",
+            "pattern": ".*",
+            "apply-to": "queues",
+            "definition": {
+               "max-length": 10000
+            },
+            "priority": 0
+        }
+    
+    return queuesize_policy_dict
+
+def __format_federation_policy(federation: Federation):
+    federation_policy_dict = {
+            "vhost": federation.service.name,
+            "policy-name": federation.name + "P",
+            "pattern": f"FROM{federation.destination_level}_E",
+            "apply-to": "exchanges",
+            "definition": {
+                "federation-upstream": federation.name
+            },
+            "priority": 0
+        }
+    
+    return federation_policy_dict
+
+def __format_mqtt_to_service_shovel(mqttio_shoveluser: MqUser, service: Service):
+    mqtt_input_shovel_dict = {
+        "src-user": mqttio_shoveluser.username,
+        "src-password": mqttio_shoveluser.password,
+        "src-vhost": "MQTT_IO",
+        "src-type": "queue",
+        "src-queue": f"{service.name}_Q",
+        "dest-user": service.shovel_user.username,
+        "dest-password": service.shovel_user.password,
+        "dest-vhost": service.name,
+        "dest-type": "exchange",
+        "dest-exchange": "MQTT_E" 
+    }
+    
+    return mqtt_input_shovel_dict
+
+def __format_service_to_mqtt_shovel(mqttio_shoveluser: MqUser, service: Service):
+    mqtt_output_shovel_dict = {
+        "src-user": service.shovel_user.username,
+        "src-password": service.shovel_user.password,
+        "src-vhost": service.name,
+        "src-type": "queue",
+        "src-queue": "SEND2MQTTIO_Q",
+        "dest-user": mqttio_shoveluser.username,
+        "dest-password": mqttio_shoveluser.password,
+        "dest-vhost": "MQTT_IO",
+        "dest-type": "exchange",
+        "dest-exchange": "MQTT_IO_E" 
+    }
+    
+    return mqtt_output_shovel_dict
+
+def __format_service_to_db_shovel(db_service_shoveluser: MqUser, service: Service):
+    db_service_shovel_dict = {
+        "src-user": service.shovel_user.username,
+        "src-password": service.shovel_user.password,
+        "src-vhost": service.name,
+        "src-type": "queue",
+        "src-queue": "SEND2DB_Q",
+        "dest-user": db_service_shoveluser.username,
+        "dest-password": db_service_shoveluser.password,
+        "dest-vhost": "DB_SERVICE",
+        "dest-type": "exchange",
+        "dest-exchange": f"FROM{service.name}_E" 
+    }
+    
+    return db_service_shovel_dict
 
 def get_users_and_permissions(schema: Schema):
     aditional_users: list[MqUser] = list(schema.aditional_users.all())
@@ -254,7 +329,7 @@ def get_full_schema_definitions(schema: Schema):
     exchanges = get_exchanges(schema)
     bindings = get_bindings(schema)
     
-    full_dict = {
+    full_schema_definitions_dict = {
         "global_parameters": global_paramterers,
         "vhosts": vhosts,
         "users": users,
@@ -263,7 +338,7 @@ def get_full_schema_definitions(schema: Schema):
         "exchanges": exchanges,
         "bindings": bindings
     }
-    return full_dict
+    return full_schema_definitions_dict
 
 
 def get_full_federations(schema: Schema):
@@ -274,7 +349,7 @@ def get_full_federations(schema: Schema):
     for federation in schema_federations:
         definitions[federation.name] = __format_federation(federation)
 
-    full_dict = {
+    full_federations_dict = {
         "path_prefix": "/api/parameters",
         "component": "federation-upstream",
         "ack-mode": "on-confirm",
@@ -286,4 +361,68 @@ def get_full_federations(schema: Schema):
         "definitions": definitions
     }
     
-    return full_dict
+    return full_federations_dict
+
+
+def get_full_policies(schema: Schema):
+    definitions = {}
+
+    schema_federations: list[Federation] = list(schema.federations.all())
+    binded_services: list[BindedService] = list(schema.binded_services.all())
+    
+    for binded_service in binded_services:
+        policy_key = f"{binded_service.service.name}_QUEUESIZE_P"
+        definitions[policy_key] = __format_queuesize_policy(binded_service.service.name)
+    
+    for federation in schema_federations:
+        policy_key = federation.name[:-1] + "P"
+        definitions[policy_key] = __format_federation_policy(federation)
+
+    full_policies_dict = {
+        "path_prefix": "/api/policies",
+        "ack-mode": "on-confirm",
+        "uri_prefix": "amqp",
+        "header":{
+            "content-type": "application/json"
+        },
+        "definitions": definitions
+    }
+
+    return full_policies_dict
+
+
+def get_full_shovels(schema: Schema):
+    definitions = {}
+
+    binded_services: list[BindedService] = list(schema.binded_services.all())
+
+    for binded_service in binded_services:
+        if binded_service.mqtt_input_enabled:
+            mqtt_to_service_shovel_name = f"mqttio_to_{binded_service.service.name.lower()}_S"
+            definitions[mqtt_to_service_shovel_name] = __format_mqtt_to_service_shovel(schema.mqttioshoveluser, binded_service.service)
+
+        if binded_service.mqtt_output_enabled:
+            service_to_mqtt_shovel_name = f"{binded_service.service.name.lower()}_to_mqttio_S"
+            definitions[service_to_mqtt_shovel_name] = __format_service_to_mqtt_shovel(schema.mqttioshoveluser, binded_service.service)
+
+        service_to_db_shovel_name = f"{binded_service.service.name.lower()}_to_dbservice_S"
+        definitions[service_to_db_shovel_name] = __format_service_to_db_shovel(schema.dbshoveluser, binded_service.service)
+
+    full_shovels_dict = {
+        "path": "/api/shovels",
+        "path_prefix": "/api/parameters/shovel/",
+        "src-protocol": "amqp091",
+        "dest-protocol": "amqp091",
+        "src-delete-after": "never",
+        "dest-add-forward-headers": False,
+        "ack-mode": "on-confirm",
+        "src-prefetch-count": 10,
+        "reconnect-delay": 5,
+        "uri_prefix": "amqp",
+        "header":{
+            "content-type": "application/json"
+        },
+        "definitions": definitions
+    }
+    
+    return full_shovels_dict

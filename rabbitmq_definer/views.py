@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .dict_getters import get_full_schema_definitions, get_full_federations
+from .dict_getters import get_full_schema_definitions, get_full_federations, get_full_policies, get_full_shovels
 from django.http import HttpRequest, FileResponse
 from django.http.response import HttpResponseBadRequest
 from .models import Schema
@@ -33,14 +33,14 @@ def home(request: HttpRequest):
         elif action == POLICIES_ACTION:
             file_path = POLICIES_PATH
             try:
-                pass
+                full_dict = get_full_policies(schema)
             except Exception as e:
                 print(f"Exception getting policies: {e}")
             
         elif action == SHOVELS_ACTION:
             file_path = SHOVELS_PATH
             try:
-                pass
+                full_dict = get_full_shovels(schema)
             except Exception as e:
                 print(f"Exception getting shovels: {e}")
         
